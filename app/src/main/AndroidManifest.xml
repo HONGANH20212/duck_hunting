@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".startGame">
+            android:name=".StartGame">
         </activity>
         <activity
             android:name=".GameOver">

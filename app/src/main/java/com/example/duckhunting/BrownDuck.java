@@ -1,14 +1,11 @@
 package com.example.duckhunting;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import java.util.Random;
+public class BrownDuck extends WhiteDuck {
 
-public class Duck2 extends Duck1{
-    Bitmap duck[] = new Bitmap[8];
-    public Duck2(Context context) {
+    public BrownDuck(Context context) {
         super(context);
         duck[0] = BitmapFactory.decodeResource(context.getResources(), R.drawable.duck2_00);
         duck[1] = BitmapFactory.decodeResource(context.getResources(), R.drawable.duck2_01);
@@ -22,24 +19,10 @@ public class Duck2 extends Duck1{
     }
 
     @Override
-    public Bitmap getBitmap() {
-        return duck[duckFame];
-    }
-
-    @Override
-    public int getWidth() {
-        return duck[0].getWidth();
-    }
-
-    @Override
-    public int getHeight() {
-        return duck[0].getHeight();
-    }
-
-    @Override
     public void resetPosition() {
         duckX = GameView.dWidth + random.nextInt(1500);
         duckY = random.nextInt(400);
         velocity = 16 + random.nextInt(19);
     }
+
 }
