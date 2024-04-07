@@ -6,12 +6,14 @@ import android.graphics.BitmapFactory;
 
 import java.util.Random;
 
-public class Duck1 {
-    Bitmap duck[] = new Bitmap[8];
-    int duckX, duckY, velocity, duckFame;
+public class WhiteDuck {
+    protected Bitmap[] duck;
+    protected int duckX, duckY, velocity, duckFame;
+    protected  Random random;
 
-    Random random;
-    public Duck1(Context context){
+    public WhiteDuck(Context context){
+        duck = new Bitmap[8];
+
         duck[0] = BitmapFactory.decodeResource(context.getResources(),R.drawable.duck0);
         duck[1] = BitmapFactory.decodeResource(context.getResources(),R.drawable.duck1);
         duck[2] = BitmapFactory.decodeResource(context.getResources(),R.drawable.duck2);
@@ -24,19 +26,28 @@ public class Duck1 {
         duckFame = 0;
         resetPosition();
     }
+
     public Bitmap getBitmap(){
         return duck[duckFame];
     }
+
     public int getWidth(){
         return duck[0].getWidth();
     }
+
     public int getHeight(){
         return duck[0].getHeight();
     }
+
     public void resetPosition(){
         duckX = GameView.dWidth + random.nextInt(1200);
         duckY = random.nextInt(300);
         velocity = 14 + random.nextInt(17);
-
     }
+
+    public void computeDuckFrame() {
+        duckFame++;
+        if (duckFame > 7) duckFame = 0;
+    }
+
 }

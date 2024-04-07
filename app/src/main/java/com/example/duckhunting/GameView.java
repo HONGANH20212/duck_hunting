@@ -12,23 +12,34 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
+import android.os.Handler;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.util.ArrayList;
-import java.util.Random;
-import android.os.Handler;
+import androidx.annotation.NonNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class GameView extends View {
     Bitmap background;
     Rect rect;
     static int dWidth, dHeight;
     Handler handler;
-    Runnable runnable;
+
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            invalidate();
+        }
+    };
+
     final long UPDATE_MILLIS = 30;
-    ArrayList<Duck1> duck1;
-    ArrayList<Duck1> duck2;
+
+    List<WhiteDuck> whiteDucks;
+    List<BrownDuck> brownDucks;
+
     //ball
     Bitmap ball, target;
     float ballX, ballY;
@@ -40,10 +51,12 @@ public class GameView extends View {
     int score = 0;
     int life = 10;
     Context context;
-    MediaPlayer duck_1_sound, ball_shoot;
+    MediaPlayer duck_sound, ball_shoot;
     boolean gameState = true;
+
     public GameView(Context context) {
         super(context);
+        System.out.println("call on game view function");
         background = BitmapFactory.decodeResource(getResources(), R.drawable.background);
         Display display = ((Activity) getContext()).getWindowManager().getDefaultDisplay();
         Point size = new Point();
@@ -52,20 +65,10 @@ public class GameView extends View {
         dHeight = size.y;
         rect = new Rect(0, 0, dWidth, dHeight);
         handler = new Handler();
-        runnable = new Runnable() {
-            @Override
-            public void run() {
-                invalidate();
-            }
-        };
-        duck1 = new ArrayList<>();
-        duck2 = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-            Duck1 duck_1 = new Duck1(context);
-            duck1.add(duck_1);
-            Duck1 duck_2 = new Duck2(context);
-            duck2.add(duck_2);
-        }
+
+        whiteDucks = Arrays.asList(new WhiteDuck(context), new WhiteDuck(context));
+        brownDucks = Arrays.asList(new BrownDuck(context), new BrownDuck(context));
+
         //icon ball
         ball = BitmapFactory.decodeResource(getResources(), R.drawable.ball);
         target = BitmapFactory.decodeResource(getResources(), R.drawable.target);
@@ -77,76 +80,83 @@ public class GameView extends View {
         borderPaint.setColor(Color.RED);
         borderPaint.setStrokeWidth(5);
         this.context = context;
-        duck_1_sound = MediaPlayer.create(context, R.raw.duck_1_sound);
+        duck_sound = MediaPlayer.create(context, R.raw.duck_1_sound);
         ball_shoot = MediaPlayer.create(context, R.raw.ball_shoot);
     }
 
     @SuppressLint("SuspiciousIndentation")
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
+        System.out.println("call on draw action");
         super.onDraw(canvas);
         //activity life
-       if (life < 1){
-           gameState = false;
-           Intent intent = new Intent(context, GameOver.class);
-           intent.putExtra("score", score);
-           context.startActivity(intent);
-           ((Activity)context).finish();
+        if (life < 1){
+            gameState = false;
+            Intent intent = new Intent(context, GameOver.class);
+            intent.putExtra("score", score);
+            context.startActivity(intent);
+            ((Activity)context).finish();
         }
+
         canvas.drawBitmap(background, null, rect, null);
-        for (int i = 0; i < duck1.size(); i++) {
-            canvas.drawBitmap(duck1.get(i).getBitmap(), duck1.get(i).duckX, duck1.get(i).duckY, null);
-            duck1.get(i).duckFame++;
-            if (duck1.get(i).duckFame > 7) {
-                duck1.get(i).duckFame = 0;
-            }
-            duck1.get(i).duckX -= duck1.get(i).velocity;
-            if (duck1.get(i).duckX < -duck1.get(i).getWidth()) {
-                duck1.get(i).resetPosition();
-                //life
+
+        for (int i = 0; i < whiteDucks.size(); i++) {
+
+            final WhiteDuck whiteDuck = whiteDucks.get(i);
+            canvas.drawBitmap(whiteDuck.getBitmap(), whiteDuck.duckX, whiteDuck.duckY, null);
+            whiteDuck.computeDuckFrame();
+            whiteDuck.duckX -= whiteDuck.velocity;
+
+            if (whiteDuck.duckX < -whiteDuck.getWidth()) {
+                whiteDuck.resetPosition();
                 life--;
-                if(duck_1_sound != null)
-                    duck_1_sound.start();
+                if(duck_sound != null) duck_sound.start();
             }
+
             //duck2
-            canvas.drawBitmap(duck2.get(i).getBitmap(), duck2.get(i).duckX, duck2.get(i).duckY, null);
-            duck2.get(i).duckFame++;
-            if (duck2.get(i).duckFame > 7) {
-                duck2.get(i).duckFame = 0;
-            }
-            duck2.get(i).duckX -= duck2.get(i).velocity;
-            if (duck2.get(i).duckX < -duck2.get(i).getWidth()) {
-                duck2.get(i).resetPosition();
-                //life
+            final BrownDuck brownDuck = brownDucks.get(i);
+            canvas.drawBitmap(brownDuck.getBitmap(), brownDuck.duckX, brownDuck.duckY, null);
+            brownDuck.computeDuckFrame();
+            brownDuck.duckX -= brownDuck.velocity;
+
+            if (brownDuck.duckX < -brownDuck.getWidth()) {
+                brownDuck.resetPosition();
                 life--;
-                if(duck_1_sound != null)
-                    duck_1_sound.start();
+                if(duck_sound != null) duck_sound.start();
             }
+
             // bắn trúng mục tiêu duck1
-            if (ballX <= (duck1.get(i).duckX + duck1.get(i).getWidth()) && ballX + ball.getWidth() >= duck1.get(i).duckX && ballY <= (duck1.get(i).duckY + duck1.get(i).getHeight()) && ballY >= duck1.get(i).duckY){
-                duck1.get(i).resetPosition();
-                // scrore
+            final int whiteDuckHE = whiteDuck.duckX + whiteDuck.getWidth();
+            final int whiteDuckVE = whiteDuck.duckY + whiteDuck.getHeight();
+            final float ballXEnd = ballX + ball.getWidth();
+            final float ballYEnd = ballY + ball.getHeight();
+
+            if (ballX <= whiteDuckHE && ballXEnd >= whiteDuck.duckX && ballY <= whiteDuckVE && ballYEnd >= whiteDuck.duckY){
+                whiteDuck.resetPosition();
                 score++;
-                if (ball_shoot != null)
-                    ball_shoot.start();
+                if (ball_shoot != null) ball_shoot.start();
             }
+
             // bắn trúng mục tiêu duck2
-            if (ballX <= (duck2.get(i).duckX + duck2.get(i).getWidth()) && ballX + ball.getWidth() >= duck2.get(i).duckX && ballY <= (duck2.get(i).duckY + duck2.get(i).getHeight()) && ballY >= duck2.get(i).duckY){
-                duck2.get(i).resetPosition();
+            final int brownDuckHE = brownDuck.duckX + brownDuck.getWidth();
+            final int brownDuckVE = brownDuck.duckY + brownDuck.getHeight();
+            if (ballX <= brownDuckHE && ballXEnd >= brownDuck.duckX && ballY <= brownDuckVE && ballYEnd >= brownDuck.duckY){
+                brownDuck.resetPosition();
                 score++;
-                if (ball_shoot != null)
-                    ball_shoot.start();
+                if (ball_shoot != null) ball_shoot.start();
             }
+
         }
+
         //ball
         if(sX > 0 && sY > dHeight * .75f){
-            canvas.drawBitmap(target, sX - target.getWidth()/2, sY - target.getHeight()/2, null);
+            canvas.drawBitmap(target, sX - (float) target.getWidth() /2, sY - (float) target.getHeight() /2, null);
         }
         if((Math.abs(fX - sX) > 0 || Math.abs(fY - sY) > 0) && fY >0 && fY > dHeight * .75f){
-            canvas.drawBitmap(target, fX - target.getWidth()/2, fY - target.getHeight()/2, null);
+            canvas.drawBitmap(target, fX - (float) target.getWidth() /2, fY - (float) target.getHeight() /2, null);
         }
         if ((Math.abs(dX) > 10 || Math.abs(dY) > 10) && sY > dHeight * .75f && fY > dHeight * .75f){
-            ballX = fX - ball.getWidth()/2 - tempX;
-            ballY = fY - ball.getHeight()/2 - tempY;
+            ballX = fX - (float) ball.getWidth() /2 - tempX;
+            ballY = fY - (float) ball.getHeight() /2 - tempY;
             canvas.drawBitmap(ball, ballX, ballY, null);
             tempX += dX;
             tempY += dY;
@@ -154,13 +164,14 @@ public class GameView extends View {
         //ball
         canvas.drawLine(0, dHeight * .75f, dWidth, dHeight * .75f, borderPaint);
         if(gameState)
-        handler.postDelayed(runnable, UPDATE_MILLIS);
+            handler.postDelayed(runnable, UPDATE_MILLIS);
     }
 
     //action ball
-
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        System.out.println("call on touch event");
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 dX = dY = fX = fY = tempX = tempY = 0;

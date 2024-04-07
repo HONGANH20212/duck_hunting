@@ -6,7 +6,7 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class startGame extends AppCompatActivity {
+public class StartGame extends AppCompatActivity {
     GameView gameView;
     MediaPlayer bg_music;
 

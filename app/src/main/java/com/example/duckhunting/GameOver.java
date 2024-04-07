@@ -10,13 +10,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class GameOver extends AppCompatActivity {
     TextView tvScore;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.game_over);
         int score = getIntent().getExtras().getInt("score");
         tvScore = findViewById(R.id.tvScore);
-        tvScore.setText(""+score);
+        tvScore.setText(String.valueOf(score));
 
     }
     public void restart(View view){
